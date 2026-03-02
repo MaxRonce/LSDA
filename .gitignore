@@ -131,6 +131,6 @@ cython_debug/
 .vscode/
 
 # Project specific
-outputs/
 data/*
 !data/.gitkeep
+outputs/
