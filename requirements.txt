@@ -1,9 +1,9 @@
-setuptools>=70       # restores distutils (removed Python 3.12), required by pyspark 3.5.x
+setuptools>=70
 click>=8.1
 pandas>=2.0
-numpy>=1.24
+numpy>=1.24,<2.0
 scikit-learn>=1.3
-pyspark>=3.5,<4.0    # 4.x incompatible with Java 23 (Subject.getSubject removed)
+pyspark>=3.5,<4.0
 matplotlib>=3.7
 seaborn>=0.13
 joblib>=1.3

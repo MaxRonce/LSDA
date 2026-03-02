@@ -1,11 +1,7 @@
 """
-sklearn_models.py — Task 3: SciKit-Learn model training, tuning & cross-validation.
+sklearn_models.py -- SciKit-Learn model training, tuning and cross-validation.
 
-Supports two tuning modes:
-  • **Grid search** (default): exhaustive ``GridSearchCV`` over ``config.PARAM_GRIDS``.
-  • **Optuna** (``--optuna`` flag): Bayesian optimisation via ``optuna`` with
-    search spaces defined in ``config.OPTUNA_SEARCH_SPACES``.
-
+Supports grid search (default) and Optuna-based Bayesian optimisation.
 Three classifiers: Logistic Regression, Random Forest, Gradient Boosted Trees.
 """
 
@@ -29,28 +25,11 @@ from lsda.data import load_pandas, get_xy_pandas
 from lsda.pipelines.sklearn_pipe import build_pipeline, fit_transform, transform
 
 
-# ------------------------------------------------------------------
-# Public API
-# ------------------------------------------------------------------
+
 
 def train_all(models: list[str] | None = None, use_optuna: bool = False,
               n_jobs: int = -1) -> dict:
-    """Train, tune, and save all requested sklearn models.
-
-    Parameters
-    ----------
-    models : list[str] | None
-        Subset of ``["lr", "rf", "gbt"]``. ``None`` → all.
-    use_optuna : bool
-        If ``True``, use Optuna for hyper-parameter search instead of grid search.
-    n_jobs : int
-        Parallelism level passed to the estimator / CV.
-
-    Returns
-    -------
-    dict
-        ``{model_key: {"best_params": …, "cv_score": …, "train_time": …}}``
-    """
+    """Train, tune, and save all requested sklearn models."""
     ensure_dirs()
     models = models or ["lr", "rf", "gbt"]
 
@@ -67,7 +46,7 @@ def train_all(models: list[str] | None = None, use_optuna: bool = False,
     results = {}
     for key in models:
         click.echo(f"\n{'='*60}")
-        click.echo(f"  Training sklearn — {MODEL_NAMES[key]}")
+        click.echo(f"  Training sklearn -- {MODEL_NAMES[key]}")
         click.echo(f"{'='*60}")
 
         if use_optuna:
@@ -81,14 +60,13 @@ def train_all(models: list[str] | None = None, use_optuna: bool = False,
     summary_path = SKLEARN_MODELS_DIR / "training_summary.json"
     with open(summary_path, "w") as f:
         json.dump(results, f, indent=2, default=str)
-    click.echo(f"\n✔ Training summary saved → {summary_path}")
+    click.echo(f"\nTraining summary saved to {summary_path}")
 
     return results
 
 
-# ------------------------------------------------------------------
-# Grid-search training
-# ------------------------------------------------------------------
+
+
 
 def _get_estimator(key: str, n_jobs: int = -1):
     """Instantiate a fresh estimator by key."""
@@ -99,11 +77,9 @@ def _get_estimator(key: str, n_jobs: int = -1):
     elif key == "rf":
         return RandomForestClassifier(
             random_state=RANDOM_STATE, n_jobs=n_jobs,
-            max_samples=0.5,  # train each tree on 50% of rows → 2× faster
+            max_samples=0.5,
         )
     elif key == "gbt":
-        # HistGradientBoostingClassifier is orders of magnitude faster than
-        # GradientBoostingClassifier on large datasets (histogram binning).
         return HistGradientBoostingClassifier(
             random_state=RANDOM_STATE, early_stopping=True,
         )
@@ -137,7 +113,7 @@ def _train_grid(key: str, X: pd.DataFrame, y: pd.Series,
     # Save model
     model_path = SKLEARN_MODELS_DIR / f"{key}_best.joblib"
     joblib.dump(gs.best_estimator_, model_path)
-    click.echo(f"  Model saved → {model_path}")
+    click.echo(f"  Model saved to {model_path}")
 
     # Save CV results
     cv_df = pd.DataFrame(gs.cv_results_)
@@ -150,21 +126,19 @@ def _train_grid(key: str, X: pd.DataFrame, y: pd.Series,
     }
 
 
-# ------------------------------------------------------------------
-# Optuna training
-# ------------------------------------------------------------------
+
+
 
 OPTUNA_SUBSAMPLE = 100_000
-OPTUNA_REFIT_SUBSAMPLE = 500_000  # subsample for refit (full data used in grid-search path)
+OPTUNA_REFIT_SUBSAMPLE = 500_000
 OPTUNA_CV_FOLDS = 3
 
 def _train_optuna(key: str, X: pd.DataFrame, y: pd.Series,
                   n_jobs: int) -> dict:
     """Train using Optuna Bayesian optimisation.
 
-    To keep search fast, we sub-sample 200 K rows and use 3-fold CV
-    during the optimisation loop, then refit the best params on the
-    full training set.
+    Sub-samples rows and uses 3-fold CV during the optimisation loop,
+    then refits the best params on a larger subset.
     """
     import optuna
     from lsda import config  # read at call-time so CLI overrides apply
@@ -172,7 +146,7 @@ def _train_optuna(key: str, X: pd.DataFrame, y: pd.Series,
 
     search_space = config.OPTUNA_SEARCH_SPACES[key]
 
-    # ── Stratified subsample for fast search ──
+    # Stratified subsample for fast search
     from sklearn.model_selection import train_test_split
     n = min(OPTUNA_SUBSAMPLE, len(X))
     if n < len(X):
@@ -205,7 +179,7 @@ def _train_optuna(key: str, X: pd.DataFrame, y: pd.Series,
 
     n_trials = config.OPTUNA_N_TRIALS
     timeout = config.OPTUNA_TIMEOUT
-    click.echo(f"  Optuna search — {n_trials} trials, {timeout}s timeout, "
+    click.echo(f"  Optuna search -- {n_trials} trials, {timeout}s timeout, "
                f"{OPTUNA_CV_FOLDS}-fold CV on {len(X_sub):,} rows")
 
     t0 = time.perf_counter()
@@ -220,17 +194,17 @@ def _train_optuna(key: str, X: pd.DataFrame, y: pd.Series,
     click.echo(f"  Best CV AUC (subsample): {best.value:.4f}")
     click.echo(f"  Search time : {search_time:.1f}s")
 
-    # ── Refit with best params on a manageable subset ──
+    # Refit with best params on a manageable subset
     from sklearn.model_selection import train_test_split as tts2
     n_refit = min(OPTUNA_REFIT_SUBSAMPLE, len(X))
     if n_refit < len(X):
         X_refit, _, y_refit, _ = tts2(
             X, y, train_size=n_refit, stratify=y, random_state=RANDOM_STATE,
         )
-        click.echo(f"  Refitting on {n_refit:,} rows (subsampled) …")
+        click.echo(f"  Refitting on {n_refit:,} rows (subsampled)...")
     else:
         X_refit, y_refit = X, y
-        click.echo(f"  Refitting on full {len(X):,} rows …")
+        click.echo(f"  Refitting on full {len(X):,} rows...")
     est = _get_estimator(key, n_jobs)
     est.set_params(**best.params)
     t0 = time.perf_counter()
@@ -242,7 +216,7 @@ def _train_optuna(key: str, X: pd.DataFrame, y: pd.Series,
     joblib.dump(est, model_path)
     click.echo(f"  Refit time  : {refit_time:.1f}s")
     click.echo(f"  Total time  : {total_time:.1f}s")
-    click.echo(f"  Model saved → {model_path}")
+    click.echo(f"  Model saved to {model_path}")
 
     return {
         "best_params": best.params,

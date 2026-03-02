@@ -1,13 +1,5 @@
 """
-sklearn_pipe.py — Task 2a: SciKit-Learn feature engineering pipeline.
-
-Implements a ``sklearn.pipeline.Pipeline`` with:
-  1. StandardScaler — normalises all 28 features to zero mean, unit variance.
-
-Feature selection rationale
----------------------------
-We keep ALL 28 features by default (see ``config.py`` for full justification).
-A configurable subset can be passed via ``feature_cols``.
+sklearn_pipe.py -- SciKit-Learn feature engineering pipeline (StandardScaler).
 """
 
 from sklearn.pipeline import Pipeline

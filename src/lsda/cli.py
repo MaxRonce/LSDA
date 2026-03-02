@@ -1,14 +1,5 @@
 """
-cli.py — Click-based CLI for the LSDA benchmark pipeline.
-
-Usage::
-
-    python -m lsda eda
-    python -m lsda train --framework sklearn --optuna
-    python -m lsda train --framework spark
-    python -m lsda benchmark --cores 1,2,4,8
-    python -m lsda evaluate
-    python -m lsda run-all
+cli.py -- Click-based CLI for the LSDA benchmark pipeline.
 """
 
 import click
@@ -16,13 +7,11 @@ import click
 
 @click.group()
 def main():
-    """LSDA — Higgs Boson Classification Benchmark (SciKit-Learn vs PySpark)."""
+    """LSDA -- Higgs Boson Classification Benchmark (SciKit-Learn vs PySpark)."""
     pass
 
 
-# ──────────────────────────────────────────────────────────────────
-# 1. EDA
-# ──────────────────────────────────────────────────────────────────
+
 @main.command()
 def eda():
     """Task 1: Exploratory data analysis."""
@@ -30,9 +19,7 @@ def eda():
     run_eda()
 
 
-# ──────────────────────────────────────────────────────────────────
-# 2+3. Train
-# ──────────────────────────────────────────────────────────────────
+
 @main.command()
 @click.option("--framework", "-f",
               type=click.Choice(["sklearn", "spark", "all"]),
@@ -68,9 +55,7 @@ def train(framework, model, optuna, n_trials, n_jobs, n_cores):
         sp_train(models=models, use_optuna=optuna, n_cores=n_cores)
 
 
-# ──────────────────────────────────────────────────────────────────
-# 4. Benchmark
-# ──────────────────────────────────────────────────────────────────
+
 @main.command()
 @click.option("--cores", "-c", default="1,2,4,8", show_default=True,
               help="Comma-separated list of core counts to benchmark.")
@@ -86,9 +71,7 @@ def benchmark(cores, model):
     run_benchmark(cores=core_list, models=models)
 
 
-# ──────────────────────────────────────────────────────────────────
-# 5. Evaluate
-# ──────────────────────────────────────────────────────────────────
+
 @main.command()
 def evaluate():
     """Task 5: Evaluate all models and produce comparison report."""
@@ -96,9 +79,7 @@ def evaluate():
     run_evaluation()
 
 
-# ──────────────────────────────────────────────────────────────────
-# Full pipeline
-# ──────────────────────────────────────────────────────────────────
+
 @main.command("run-all")
 @click.option("--optuna", is_flag=True, default=False,
               help="Use Optuna for hyper-parameter search.")
@@ -108,14 +89,14 @@ def evaluate():
               help="Comma-separated core counts for the benchmark step.")
 @click.pass_context
 def run_all(ctx, optuna, n_trials, cores):
-    """Run the full pipeline: EDA → Train → Benchmark → Evaluate."""
-    click.echo("\n🚀 Running full LSDA pipeline …\n")
+    """Run the full pipeline: EDA, Train, Benchmark, Evaluate."""
+    click.echo("\nRunning full LSDA pipeline...\n")
     ctx.invoke(eda)
     ctx.invoke(train, framework="all", model="all", optuna=optuna,
                n_trials=n_trials, n_jobs=-1, n_cores=None)
     ctx.invoke(benchmark, cores=cores, model="all")
     ctx.invoke(evaluate)
-    click.echo("\n🏁 Pipeline complete!")
+    click.echo("\nPipeline complete.")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-# lsda.ps1 — project launcher that sets up the Hadoop/Java environment
+# lsda.ps1 -- project launcher that sets up the Hadoop/Java environment
 # required for PySpark to work correctly on Windows.
 #
 # Requirements:
@@ -9,7 +9,7 @@
 #         .\lsda.ps1 eda
 #         .\lsda.ps1 run-all
 
-# Java 21 is required — Java 23 removed Subject.getSubject() used by Hadoop
+# Java 21 is required -- Java 23 removed Subject.getSubject() used by Hadoop
 $env:JAVA_HOME   = "C:\Program Files\Java\jdk-21"
 $env:PATH        = "$env:JAVA_HOME\bin;$env:PATH"
 

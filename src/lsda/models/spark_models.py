@@ -1,13 +1,9 @@
 """
-spark_models.py — Task 3: PySpark ML model training, tuning & cross-validation.
+spark_models.py -- PySpark ML model training, tuning and cross-validation.
 
-Three classifiers mirroring the SciKit-Learn set:
-  • Logistic Regression
-  • Random Forest
-  • Gradient Boosted Trees
-
-Uses ``CrossValidator`` with ``ParamGridBuilder`` for K-fold tuning.
-Optionally uses Optuna when ``--optuna`` is passed.
+Three classifiers: Logistic Regression, Random Forest, Gradient Boosted Trees.
+Uses CrossValidator with ParamGridBuilder for K-fold tuning.
+Optionally uses Optuna when --optuna is passed.
 """
 
 import time
@@ -30,28 +26,12 @@ from lsda.data import load_spark, get_spark_session
 from lsda.pipelines.spark_pipe import build_pipeline
 
 
-# ------------------------------------------------------------------
-# Public API
-# ------------------------------------------------------------------
+
+
 
 def train_all(models: list[str] | None = None, use_optuna: bool = False,
               n_cores: int | None = None) -> dict:
-    """Train, tune, and save all requested PySpark models.
-
-    Parameters
-    ----------
-    models : list[str] | None
-        Subset of ``["lr", "rf", "gbt"]``. ``None`` → all.
-    use_optuna : bool
-        If ``True``, use Optuna for hyper-parameter search.
-    n_cores : int | None
-        Number of local cores for SparkSession.
-
-    Returns
-    -------
-    dict
-        ``{model_key: {"best_params": …, "cv_score": …, "train_time": …}}``
-    """
+    """Train, tune, and save all requested PySpark models."""
     ensure_dirs()
     models = models or ["lr", "rf", "gbt"]
 
@@ -73,7 +53,7 @@ def train_all(models: list[str] | None = None, use_optuna: bool = False,
     results = {}
     for key in models:
         click.echo(f"\n{'='*60}")
-        click.echo(f"  Training PySpark — {MODEL_NAMES[key]}")
+        click.echo(f"  Training PySpark -- {MODEL_NAMES[key]}")
         click.echo(f"{'='*60}")
 
         if use_optuna:
@@ -87,15 +67,14 @@ def train_all(models: list[str] | None = None, use_optuna: bool = False,
     summary_path = SPARK_MODELS_DIR / "training_summary.json"
     with open(summary_path, "w") as f:
         json.dump(results, f, indent=2, default=str)
-    click.echo(f"\n✔ Training summary saved → {summary_path}")
+    click.echo(f"\nTraining summary saved to {summary_path}")
 
     spark.stop()
     return results
 
 
-# ------------------------------------------------------------------
-# Estimator factory
-# ------------------------------------------------------------------
+
+
 
 def _get_estimator(key: str):
     if key == "lr":
@@ -117,18 +96,17 @@ def _get_estimator(key: str):
         raise ValueError(f"Unknown model key: {key}")
 
 
-# ------------------------------------------------------------------
-# Grid search
-# ------------------------------------------------------------------
+
+
 
 def _build_param_grid(key: str, estimator):
-    """Build a PySpark ParamGrid from config PARAM_GRIDS."""
+    """Build a PySpark ParamGrid from config."""
     builder = ParamGridBuilder()
     grid = PARAM_GRIDS[key]
 
     if key == "lr":
         builder.addGrid(estimator.regParam,
-                        [1.0 / c for c in grid["C"]])  # regParam ≈ 1/C
+                        [1.0 / c for c in grid["C"]])
     elif key == "rf":
         builder.addGrid(estimator.numTrees, grid["n_estimators"])
         builder.addGrid(estimator.maxDepth, grid["max_depth"])
@@ -153,7 +131,7 @@ def _train_grid(key: str, df_train, evaluator) -> dict:
         seed=RANDOM_STATE,
     )
 
-    click.echo(f"  CrossValidator — {len(param_grid)} param combos × {CV_FOLDS} folds")
+    click.echo(f"  CrossValidator -- {len(param_grid)} param combos x {CV_FOLDS} folds")
 
     t0 = time.perf_counter()
     cv_model = cv.fit(df_train)
@@ -166,7 +144,7 @@ def _train_grid(key: str, df_train, evaluator) -> dict:
     # Save best model
     model_path = str(SPARK_MODELS_DIR / f"{key}_best")
     cv_model.bestModel.write().overwrite().save(model_path)
-    click.echo(f"  Model saved → {model_path}")
+    click.echo(f"  Model saved to {model_path}")
 
     return {
         "best_params": "see saved model metadata",
@@ -175,9 +153,8 @@ def _train_grid(key: str, df_train, evaluator) -> dict:
     }
 
 
-# ------------------------------------------------------------------
-# Optuna
-# ------------------------------------------------------------------
+
+
 
 def _train_optuna(key: str, df_train, evaluator, spark) -> dict:
     """Optuna-based tuning for PySpark models."""
@@ -220,7 +197,7 @@ def _train_optuna(key: str, df_train, evaluator, spark) -> dict:
 
         return sum(auc_scores) / len(auc_scores)
 
-    click.echo(f"  Optuna search — {OPTUNA_N_TRIALS} trials, "
+    click.echo(f"  Optuna search -- {OPTUNA_N_TRIALS} trials, "
                f"{OPTUNA_TIMEOUT}s timeout")
 
     t0 = time.perf_counter()
@@ -241,7 +218,7 @@ def _train_optuna(key: str, df_train, evaluator, spark) -> dict:
 
     model_path = str(SPARK_MODELS_DIR / f"{key}_best")
     final_model.write().overwrite().save(model_path)
-    click.echo(f"  Model saved → {model_path}")
+    click.echo(f"  Model saved to {model_path}")
 
     df_train.unpersist()
 

@@ -1,15 +1,11 @@
 """
-config.py — Central configuration for paths, column names, and hyperparameter grids.
-
-All tuneable constants live here so that every module stays in sync.
+config.py -- Central configuration for paths, column names, and hyperparameter grids.
 """
 
 from pathlib import Path
 
-# ---------------------------------------------------------------------------
-# Paths
-# ---------------------------------------------------------------------------
-PROJECT_ROOT = Path(__file__).resolve().parents[2]  # …/LSDA
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = PROJECT_ROOT / "data"
 OUTPUT_DIR = PROJECT_ROOT / "outputs"
 
@@ -24,11 +20,9 @@ SPARK_MODELS_DIR = MODELS_DIR / "spark"
 BENCHMARK_DIR = OUTPUT_DIR / "benchmarks"
 EVAL_DIR = OUTPUT_DIR / "evaluation"
 
-# ---------------------------------------------------------------------------
-# Dataset schema
-# ---------------------------------------------------------------------------
+
 # The first column is the label (1 = signal, 0 = background).
-# Columns 2-22 are low-level kinematic features measured by the detector.
+# Columns 2-22 are low-level kinematic features.
 # Columns 23-29 are high-level physics-derived features.
 LABEL_COL = "label"
 
@@ -42,51 +36,26 @@ LOW_LEVEL_FEATURES = [
 ]
 
 HIGH_LEVEL_FEATURES = [
-    "m_jj",       # invariant mass of jet-jet system
-    "m_jjj",      # invariant mass of jet-jet-jet system
-    "m_lv",       # invariant mass of lepton-neutrino system
-    "m_jlv",      # invariant mass of jet-lepton-neutrino system
-    "m_bb",       # invariant mass of b-tagged jet pair
-    "m_wbb",      # invariant mass of W+bb system
-    "m_wwbb",     # invariant mass of WW+bb system
+    "m_jj",
+    "m_jjj",
+    "m_lv",
+    "m_jlv",
+    "m_bb",
+    "m_wbb",
+    "m_wwbb",
 ]
 
 # All 28 features in column order
 FEATURE_COLS = LOW_LEVEL_FEATURES + HIGH_LEVEL_FEATURES
 ALL_COLS = [LABEL_COL] + FEATURE_COLS
 
-# ---------------------------------------------------------------------------
-# Feature selection justification
-# ---------------------------------------------------------------------------
-# We keep ALL 28 features by default.
-#
-# Justification:
-# • The 21 low-level kinematics are direct detector measurements — each one
-#   encodes a potentially unique physical signature of Higgs production.
-# • The 7 high-level features are physics-motivated invariant-mass
-#   combinations specifically designed to separate signal from background.
-#   Dropping them would discard expert domain knowledge.
-# • Since the dataset has only 28 numeric features (no categoricals, no
-#   high-cardinality columns) there is negligible risk of the "curse of
-#   dimensionality", and tree-based models handle irrelevant features
-#   gracefully via feature-importance pruning.
-# • Empirically, the original paper shows that using ALL features gives the
-#   best AUC, confirming that none are redundant enough to exclude a priori.
-#
-# If feature selection is desired (e.g. to study the value of high-level
-# features), the pipeline accepts a configurable subset via the
-# `--features` CLI flag.
 USE_ALL_FEATURES = True
 
-# ---------------------------------------------------------------------------
-# Cross-validation
-# ---------------------------------------------------------------------------
+
 CV_FOLDS = 5
 RANDOM_STATE = 42
 
-# ---------------------------------------------------------------------------
-# Hyperparameter search grids (shared between sklearn & PySpark)
-# ---------------------------------------------------------------------------
+
 PARAM_GRIDS = {
     "lr": {
         "C": [0.01, 0.1, 1.0, 10.0],
@@ -110,9 +79,7 @@ MODEL_NAMES = {
     "gbt": "Gradient Boosted Trees",
 }
 
-# ---------------------------------------------------------------------------
-# Optuna tuning (optional, activated via --optuna flag)
-# ---------------------------------------------------------------------------
+
 OPTUNA_N_TRIALS = 10
 OPTUNA_TIMEOUT = 60  # seconds per model
 
@@ -131,14 +98,10 @@ OPTUNA_SEARCH_SPACES = {
     },
 }
 
-# ---------------------------------------------------------------------------
-# Benchmark core counts
-# ---------------------------------------------------------------------------
+
 BENCHMARK_CORES = [1, 2, 4, 8]
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+
 
 def ensure_dirs() -> None:
     """Create all output directories if they do not exist."""

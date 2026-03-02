@@ -1,14 +1,8 @@
 """
-benchmark.py — Task 4: Computational efficiency & scalability benchmarking.
+benchmark.py -- Computational efficiency and scalability benchmarking.
 
 Measures training and prediction times for each classifier as a function of
-the number of CPU cores:
-  • SciKit-Learn: controlled via ``n_jobs``
-  • PySpark: controlled via ``local[k]`` master configuration
-
-Produces:
-  • ``benchmark_results.csv`` — raw timing data
-  • ``speedup_sklearn.png`` / ``speedup_spark.png`` — speedup curves
+the number of CPU cores. Produces benchmark_results.csv and speedup plots.
 """
 
 import time
@@ -31,33 +25,17 @@ from lsda.pipelines.spark_pipe import build_pipeline as sp_build
 
 def run_benchmark(cores: list[int] | None = None,
                   models: list[str] | None = None) -> pd.DataFrame:
-    """Run the full scalability benchmark.
-
-    Parameters
-    ----------
-    cores : list[int] | None
-        CPU core counts to test. Defaults to ``config.BENCHMARK_CORES``.
-    models : list[str] | None
-        Model keys to benchmark. Defaults to all three.
-
-    Returns
-    -------
-    pd.DataFrame
-        Timing results with columns:
-        ``framework, model, n_cores, train_time, predict_time``.
-    """
+    """Run the full scalability benchmark."""
     ensure_dirs()
     cores = cores or BENCHMARK_CORES
     models = models or ["lr", "rf", "gbt"]
 
     rows: list[dict] = []
 
-    click.echo("\n╔══════════════════════════════════════════════╗")
-    click.echo("║        Scalability Benchmark                 ║")
-    click.echo("╚══════════════════════════════════════════════╝")
+    click.echo("\n=== Scalability Benchmark ===")
 
-    # ── sklearn benchmarks ──
-    click.echo("\n── SciKit-Learn ──")
+    # sklearn benchmarks
+    click.echo("\n-- SciKit-Learn --")
     df_train = load_pandas("train")
     df_test = load_pandas("test")
     X_train, y_train = get_xy_pandas(df_train)
@@ -81,8 +59,8 @@ def run_benchmark(cores: list[int] | None = None,
                 "predict_time": round(pred_t, 3),
             })
 
-    # ── PySpark benchmarks ──
-    click.echo("\n── PySpark ──")
+    # PySpark benchmarks
+    click.echo("\n-- PySpark --")
     for key in models:
         for k in cores:
             click.echo(f"  {MODEL_NAMES[key]} | local[{k}]")
@@ -98,7 +76,7 @@ def run_benchmark(cores: list[int] | None = None,
     results = pd.DataFrame(rows)
     csv_path = BENCHMARK_DIR / "benchmark_results.csv"
     results.to_csv(csv_path, index=False)
-    click.echo(f"\n✔ Results saved → {csv_path}")
+    click.echo(f"\nResults saved to {csv_path}")
 
     # Plots
     _plot_speedup(results, "sklearn")
@@ -107,9 +85,8 @@ def run_benchmark(cores: list[int] | None = None,
     return results
 
 
-# ------------------------------------------------------------------
-# Sklearn benchmark helper
-# ------------------------------------------------------------------
+
+
 
 def _bench_sklearn(key: str, X_train, y_train, X_test,
                    n_jobs: int) -> tuple[float, float]:
@@ -127,9 +104,8 @@ def _bench_sklearn(key: str, X_train, y_train, X_test,
     return train_time, pred_time
 
 
-# ------------------------------------------------------------------
-# PySpark benchmark helper
-# ------------------------------------------------------------------
+
+
 
 def _bench_spark(key: str, n_cores: int) -> tuple[float, float]:
     from pyspark.ml.classification import (
@@ -188,9 +164,8 @@ def _get_spark_estimator(key: str):
         raise ValueError(f"Unknown model key: {key}")
 
 
-# ------------------------------------------------------------------
-# Plotting
-# ------------------------------------------------------------------
+
+
 
 def _plot_speedup(results: pd.DataFrame, framework: str) -> None:
     """Plot speedup curves (T1 / Tk) for each model in a framework."""
@@ -209,13 +184,13 @@ def _plot_speedup(results: pd.DataFrame, framework: str) -> None:
             ax.plot(sub["n_cores"], sub[metric], "o-", label=model_name)
         ax.set_xlabel("Number of CPU Cores")
         ax.set_ylabel(ylabel)
-        ax.set_title(f"{framework.upper()} — {ylabel}")
+        ax.set_title(f"{framework.upper()} -- {ylabel}")
         ax.legend()
         ax.grid(True, alpha=0.3)
 
-    fig.suptitle(f"Scalability Benchmark — {framework.upper()}", fontsize=14)
+    fig.suptitle(f"Scalability Benchmark -- {framework.upper()}", fontsize=14)
     fig.tight_layout()
     path = BENCHMARK_DIR / f"speedup_{framework}.png"
     fig.savefig(path, dpi=150)
     plt.close(fig)
-    click.echo(f"  Plot saved → {path}")
+    click.echo(f"  Plot saved to {path}")

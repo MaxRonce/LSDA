@@ -1,9 +1,8 @@
 """
-spark_pipe.py — Task 2b: PySpark ML feature engineering pipeline.
+spark_pipe.py -- PySpark ML feature engineering pipeline.
 
-Mirrors the SciKit-Learn pipeline exactly:
-  1. VectorAssembler — collects all 28 feature columns into a single vector.
-  2. StandardScaler — normalises the assembled vector.
+VectorAssembler collects all 28 feature columns into a single vector,
+then StandardScaler normalises it.
 """
 
 from pyspark.ml import Pipeline
@@ -13,13 +12,7 @@ from lsda.config import FEATURE_COLS
 
 
 def build_pipeline(feature_cols: list[str] | None = None) -> Pipeline:
-    """Return an un-fitted PySpark preprocessing pipeline.
-
-    Parameters
-    ----------
-    feature_cols : list[str] | None
-        Columns to assemble. Defaults to all 28 features.
-    """
+    """Return an un-fitted PySpark preprocessing pipeline."""
     cols = feature_cols or FEATURE_COLS
 
     assembler = VectorAssembler(inputCols=cols, outputCol="raw_features")

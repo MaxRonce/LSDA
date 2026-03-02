@@ -1,4 +1,4 @@
-# LSDA — Higgs Boson Classification Benchmark
+# LSDA -- Higgs Boson Classification Benchmark
 
 **Large-Scale Data Analysis** project comparing SciKit-Learn vs PySpark ML on the Higgs boson signal/background classification task.
 
@@ -20,8 +20,8 @@ pip install -e .
 ## Data
 
 Place the dataset files in the `data/` directory:
-- `HIGGS-train.csv` — 2,000,000 training examples
-- `HIGGS-test.csv` — 500,000 test examples
+- `HIGGS-train.csv` -- 2,000,000 training examples
+- `HIGGS-test.csv` -- 500,000 test examples
 
 Download link: https://utbox.univ-tours.fr/s/dXYJaT2x7fkaxGm
 

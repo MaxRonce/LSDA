@@ -1,1 +1,1 @@
-"""LSDA — Large-Scale Data Analysis: Higgs Boson Classification Benchmark."""
+"""LSDA -- Large-Scale Data Analysis: Higgs Boson Classification Benchmark."""

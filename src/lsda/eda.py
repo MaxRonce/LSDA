@@ -1,12 +1,9 @@
 """
-eda.py — Task 1: Exploratory Data Analysis.
+eda.py -- Exploratory Data Analysis.
 
-Produces:
-  • Class balance bar chart
-  • Per-feature distribution histograms (signal vs background overlay)
-  • Correlation heatmap
-  • Summary statistics table
-All outputs saved to ``outputs/eda/``.
+Produces class balance bar chart, per-feature distribution histograms
+(signal vs background overlay), correlation heatmap, and summary statistics.
+All outputs saved to outputs/eda/.
 """
 
 import matplotlib
@@ -29,24 +26,22 @@ def run_eda() -> None:
     ensure_dirs()
     df = load_pandas("train")
 
-    click.echo("\n── 1. Summary statistics ──")
+    click.echo("\n-- 1. Summary statistics --")
     _summary_statistics(df)
 
-    click.echo("\n── 2. Class balance ──")
+    click.echo("\n-- 2. Class balance --")
     _class_balance(df)
 
-    click.echo("\n── 3. Feature distributions ──")
+    click.echo("\n-- 3. Feature distributions --")
     _feature_distributions(df)
 
-    click.echo("\n── 4. Correlation heatmap ──")
+    click.echo("\n-- 4. Correlation heatmap --")
     _correlation_heatmap(df)
 
-    click.echo(f"\n✔ EDA complete — outputs saved to {EDA_DIR}")
+    click.echo(f"\nEDA complete -- outputs saved to {EDA_DIR}")
 
 
-# ------------------------------------------------------------------
-# Internal helpers
-# ------------------------------------------------------------------
+
 
 def _summary_statistics(df: pd.DataFrame) -> None:
     """Compute and save descriptive statistics for every feature."""
@@ -54,7 +49,7 @@ def _summary_statistics(df: pd.DataFrame) -> None:
     stats["missing_%"] = df[FEATURE_COLS].isnull().mean() * 100
     stats_path = EDA_DIR / "summary_statistics.csv"
     stats.to_csv(stats_path)
-    click.echo(f"  Saved → {stats_path}")
+    click.echo(f"  Saved {stats_path}")
 
     # Also print a compact view
     click.echo(stats.to_string())
@@ -67,14 +62,14 @@ def _class_balance(df: pd.DataFrame) -> None:
     counts.plot.bar(ax=ax, color=["#3498db", "#e74c3c"], edgecolor="black")
     ax.set_xticklabels(["Background (0)", "Signal (1)"], rotation=0)
     ax.set_ylabel("Count")
-    ax.set_title("Class Balance — Signal vs Background")
+    ax.set_title("Class Balance -- Signal vs Background")
     for i, v in enumerate(counts):
         ax.text(i, v + 5000, f"{v:,}", ha="center", fontsize=10)
     fig.tight_layout()
     path = EDA_DIR / "class_balance.png"
     fig.savefig(path, dpi=150)
     plt.close(fig)
-    click.echo(f"  Saved → {path}")
+    click.echo(f"  Saved {path}")
 
 
 def _feature_distributions(df: pd.DataFrame) -> None:
@@ -116,7 +111,7 @@ def _plot_feature_group(df: pd.DataFrame, features: list[str],
     path = EDA_DIR / filename
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
-    click.echo(f"  Saved → {path}")
+    click.echo(f"  Saved {path}")
 
 
 def _correlation_heatmap(df: pd.DataFrame) -> None:
@@ -131,4 +126,4 @@ def _correlation_heatmap(df: pd.DataFrame) -> None:
     path = EDA_DIR / "correlation_heatmap.png"
     fig.savefig(path, dpi=150)
     plt.close(fig)
-    click.echo(f"  Saved → {path}")
+    click.echo(f"  Saved {path}")
